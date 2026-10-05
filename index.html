@@ -3,723 +3,806 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mundo Aberto 3D - Primeira Pessoa</title>
+    <title>Neymar Jr. - Futebol de Zoação Profissional</title>
     <style>
-        * { margin: 0; padding: 0; }
-        body { overflow: hidden; background: #000; font-family: 'Segoe UI', sans-serif; }
-        canvas { display: block; }
-        
-        #hud {
+        * {
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: linear-gradient(145deg, #0a2f1f 0%, #1b4d2e 100%);
+            font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 16px;
+        }
+
+        .game-container {
+            background: #1e3b2b;
+            border-radius: 48px 48px 32px 32px;
+            padding: 24px 24px 32px;
+            box-shadow: 0 30px 30px rgba(0, 0, 0, 0.7), inset 0 1px 4px rgba(255, 255, 255, 0.2);
+            border: 2px solid #c9a83b;
+        }
+
+        .field {
+            position: relative;
+            background: #2a7a3b;
+            background-image: 
+                radial-gradient(circle at 20% 40%, #3d9e4d 0%, transparent 30%),
+                radial-gradient(circle at 90% 70%, #3d9e4d 0%, transparent 40%),
+                repeating-linear-gradient(90deg, rgba(255,255,255,0.03) 0px, rgba(255,255,255,0.03) 40px, transparent 40px, transparent 80px);
+            width: 800px;
+            height: 500px;
+            border-radius: 24px;
+            border: 6px solid #f0e6d2;
+            box-shadow: inset 0 0 60px rgba(0,0,0,0.5), 0 0 0 4px #2d5a2d;
+            overflow: hidden;
+            cursor: crosshair;
+        }
+
+        .field::before {
+            content: '';
             position: absolute;
-            top: 20px;
-            left: 20px;
-            color: #fff;
-            font-size: 14px;
-            text-shadow: 0 0 10px rgba(0,0,0,0.8);
-            pointer-events: none;
-            font-family: 'Segoe UI', sans-serif;
-            line-height: 1.8;
-            background: rgba(0,0,0,0.5);
-            padding: 12px 18px;
-            border-radius: 10px;
-            backdrop-filter: blur(5px);
-            border: 1px solid rgba(255,255,255,0.05);
-            z-index: 10;
+            top: 50%;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: rgba(255,255,255,0.7);
+            transform: translateY(-50%);
         }
-        #hud .label { color: #8899aa; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
-        #hud .value { color: #4fc3f7; font-weight: bold; }
-        
-        #controls {
-            position: absolute;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: rgba(255,255,255,0.6);
-            font-size: 12px;
-            background: rgba(0,0,0,0.7);
-            padding: 10px 24px;
-            border-radius: 30px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.05);
-            pointer-events: none;
-            font-family: 'Segoe UI', sans-serif;
-            letter-spacing: 0.5px;
-            white-space: nowrap;
-            z-index: 10;
-        }
-        #controls .key {
-            color: #4fc3f7;
-            font-weight: bold;
-            background: rgba(79,195,247,0.1);
-            padding: 2px 10px;
-            border-radius: 4px;
-            margin: 0 2px;
-            border: 1px solid rgba(79,195,247,0.2);
-        }
-        
-        #crosshair {
+
+        .field::after {
+            content: '';
             position: absolute;
             top: 50%;
             left: 50%;
-            transform: translate(-50%, -50%);
-            pointer-events: none;
-            z-index: 5;
-        }
-        #crosshair::before, #crosshair::after {
-            content: '';
-            position: absolute;
-            background: rgba(255,255,255,0.5);
-        }
-        #crosshair::before {
-            width: 2px;
-            height: 20px;
-            top: -10px;
-            left: -1px;
-        }
-        #crosshair::after {
-            width: 20px;
-            height: 2px;
-            top: -1px;
-            left: -10px;
-        }
-        #crosshair .dot {
-            position: absolute;
-            width: 3px;
-            height: 3px;
-            background: rgba(255,255,255,0.3);
+            width: 90px;
+            height: 90px;
+            border: 3px solid rgba(255,255,255,0.7);
             border-radius: 50%;
-            top: -1.5px;
-            left: -1.5px;
+            transform: translate(-50%, -50%);
         }
-        
-        #loading {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: #0a0a1a;
+
+        .area {
+            position: absolute;
+            width: 120px;
+            height: 220px;
+            border: 3px solid rgba(255,255,255,0.7);
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .area-left {
+            left: -6px;
+            border-right: none;
+            border-radius: 0 120px 120px 0;
+        }
+
+        .area-right {
+            right: -6px;
+            border-left: none;
+            border-radius: 120px 0 0 120px;
+        }
+
+        .goalkeeper {
+            position: absolute;
+            width: 12px;
+            height: 50px;
+            background: #f1c40f;
+            border-radius: 6px;
+            top: 50%;
+            transform: translateY(-50%);
+            box-shadow: 0 0 10px #f1c40f;
+        }
+
+        .goalkeeper-left { left: 20px; }
+        .goalkeeper-right { right: 20px; }
+
+        .player {
+            position: absolute;
+            width: 50px;
+            height: 70px;
+            border-radius: 12px 12px 8px 8px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            z-index: 1000;
-            font-family: 'Segoe UI', sans-serif;
-            color: #fff;
+            font-weight: bold;
+            color: white;
+            text-shadow: 2px 2px 2px rgba(0,0,0,0.8);
+            box-shadow: 0 8px 0 rgba(0,0,0,0.3), 0 10px 15px rgba(0,0,0,0.5);
+            transition: transform 0.08s ease, filter 0.3s;
+            z-index: 10;
+            font-size: 11px;
+            line-height: 1;
+            text-align: center;
+            border: 2px solid rgba(255,255,255,0.5);
         }
-        #loading .title {
-            font-size: 32px;
-            font-weight: 300;
-            letter-spacing: 4px;
-            background: linear-gradient(135deg, #4fc3f7, #ff6b35);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+
+        .player span {
+            font-size: 22px;
+            margin-bottom: 2px;
         }
-        #loading .subtitle {
-            font-size: 14px;
-            color: #8899aa;
-            letter-spacing: 2px;
-            margin-top: 10px;
+
+        #neymar {
+            background: #f7d117;
+            color: #1e3b2b;
+            text-shadow: none;
+            border-color: #fff3b0;
         }
-        #loading .bar {
-            width: 300px;
-            height: 3px;
-            background: #1a1a2e;
-            margin-top: 30px;
-            border-radius: 2px;
-            overflow: hidden;
+
+        #raphinha {
+            background: #1e5aa7;
+            color: white;
+            border-color: #8bb9ff;
         }
-        #loading .bar .fill {
-            height: 100%;
-            width: 0%;
-            background: linear-gradient(90deg, #4fc3f7, #ff6b35);
-            animation: loadProgress 2s ease-in-out forwards;
-        }
-        @keyframes loadProgress {
-            0% { width: 0%; }
-            100% { width: 100%; }
-        }
-        
-        #notify {
+
+        .ball {
             position: absolute;
-            top: 80px;
+            width: 28px;
+            height: 28px;
+            background: radial-gradient(circle at 35% 35%, #fff, #bbb);
+            border-radius: 50%;
+            box-shadow: 0 6px 0 #6b6b6b, 0 8px 12px black;
+            z-index: 20;
+            border: 2px solid #333;
+            transition: transform 0.05s linear;
+        }
+
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 18px;
+            gap: 20px;
+            color: white;
+            font-weight: bold;
+            text-shadow: 0 2px 4px black;
+        }
+
+        .status-item {
+            background: #0f281b;
+            padding: 8px 18px;
+            border-radius: 30px;
+            border: 2px solid #c9a83b;
+            box-shadow: inset 0 2px 6px black;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+        }
+
+        .status-item span {
+            color: #f7d117;
+            font-size: 1.2rem;
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        button {
+            background: #c9a83b;
+            border: none;
+            border-radius: 40px;
+            padding: 12px 26px;
+            font-weight: 800;
+            font-size: 1rem;
+            color: #1e2b1e;
+            box-shadow: 0 6px 0 #7a6220, 0 8px 12px black;
+            cursor: pointer;
+            transition: all 0.08s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border: 2px solid #ffe28c;
+            font-family: inherit;
+        }
+
+        button:active {
+            transform: translateY(6px);
+            box-shadow: 0 1px 0 #7a6220, 0 5px 10px black;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #7a6220;
+            pointer-events: none;
+            filter: grayscale(0.5);
+        }
+
+        .message-box {
+            background: #0f1f15;
+            border-radius: 40px;
+            padding: 14px 24px;
+            margin-top: 18px;
+            color: #f0e6d2;
+            font-weight: 600;
+            text-align: center;
+            border-left: 8px solid #f7d117;
+            box-shadow: inset 0 0 12px black;
+            min-height: 72px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            letter-spacing: 0.3px;
+        }
+
+        .fragile-badge {
+            position: absolute;
+            top: -18px;
             left: 50%;
             transform: translateX(-50%);
-            color: #fff;
-            font-size: 16px;
-            font-weight: 300;
-            text-shadow: 0 0 20px rgba(0,0,0,0.8);
-            opacity: 0;
-            transition: opacity 0.5s;
+            background: #e63946;
+            color: white;
+            padding: 4px 14px;
+            border-radius: 40px;
+            font-weight: 900;
+            font-size: 0.75rem;
+            border: 3px solid #ffb3b3;
+            box-shadow: 0 6px 0 #8b1e1e;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            white-space: nowrap;
+            z-index: 30;
             pointer-events: none;
-            font-family: 'Segoe UI', sans-serif;
-            background: rgba(0,0,0,0.5);
-            padding: 10px 24px;
-            border-radius: 8px;
-            backdrop-filter: blur(5px);
-            border: 1px solid rgba(255,255,255,0.05);
-            z-index: 10;
+            animation: pulse 1.5s infinite;
         }
-        #notify.show { opacity: 1; }
-        
-        #info {
+
+        @keyframes pulse {
+            0% { opacity: 1; transform: translateX(-50%) scale(1); }
+            50% { opacity: 0.8; transform: translateX(-50%) scale(1.05); }
+            100% { opacity: 1; transform: translateX(-50%) scale(1); }
+        }
+
+        .oil-effect {
             position: absolute;
-            top: 20px;
-            right: 20px;
-            color: rgba(255,255,255,0.3);
-            font-size: 11px;
-            font-family: 'Segoe UI', sans-serif;
-            text-align: right;
+            width: 100%;
+            height: 100%;
             pointer-events: none;
-            z-index: 10;
-            line-height: 1.6;
+            background: radial-gradient(circle at 30% 40%, rgba(255,255,200,0.2) 0%, transparent 60%),
+                        radial-gradient(circle at 70% 60%, rgba(200,255,200,0.2) 0%, transparent 60%);
+            z-index: 5;
+            mix-blend-mode: overlay;
+            border-radius: 18px;
         }
-        
-        @media (max-width: 600px) {
-            #controls { font-size: 10px; padding: 8px 12px; white-space: normal; width: 90%; }
-            #hud { font-size: 12px; padding: 8px 12px; }
-            #info { display: none; }
+
+        .key-hint {
+            display: inline-block;
+            background: #0f1f15;
+            border: 2px solid #c9a83b;
+            border-radius: 8px;
+            padding: 2px 8px;
+            margin: 0 3px;
+            font-weight: 900;
+            color: #f7d117;
+            font-size: 0.85rem;
+            box-shadow: 0 2px 0 #7a6220;
+        }
+
+        .small-hint {
+            font-size: 0.8rem;
+            color: #c0c0a0;
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        /* Botões virtuais de controle (opcional, para touch) */
+        .dpad-container {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 16px;
+        }
+
+        .dpad {
+            display: grid;
+            grid-template-columns: repeat(3, 50px);
+            grid-template-rows: repeat(3, 50px);
+            gap: 4px;
+        }
+
+        .dpad button {
+            padding: 0;
+            border-radius: 12px;
+            font-size: 1.4rem;
+            box-shadow: 0 4px 0 #7a6220, 0 5px 8px black;
+            border: 2px solid #ffe28c;
+            background: #c9a83b;
+        }
+
+        .dpad button:active {
+            transform: translateY(4px);
+            box-shadow: 0 1px 0 #7a6220;
+        }
+
+        .dpad .empty {
+            background: transparent;
+            box-shadow: none;
+            border: none;
+            pointer-events: none;
         }
     </style>
 </head>
 <body>
-    <div id="loading">
-        <div class="title">🌆 CIDADE ABERTA</div>
-        <div class="subtitle">Carregando mundo em primeira pessoa...</div>
-        <div class="bar"><div class="fill"></div></div>
+    <div class="game-container">
+        <div class="field" id="field">
+            <div class="area area-left"></div>
+            <div class="area area-right"></div>
+            <div class="goalkeeper goalkeeper-left"></div>
+            <div class="goalkeeper goalkeeper-right"></div>
+
+            <div class="player" id="neymar" style="left: 100px; top: 220px;">
+                <span>⚽</span> NEYMAR
+            </div>
+
+            <div class="player" id="raphinha" style="left: 650px; top: 220px;">
+                <span>✨</span> RAPHINHA
+            </div>
+
+            <div class="ball" id="ball" style="left: 120px; top: 240px;"></div>
+
+            <div class="oil-effect"></div>
+        </div>
+
+        <div class="status-bar">
+            <div class="status-item">
+                🎮 <span id="score-display">GOLS: 0</span>
+            </div>
+            <div class="status-item">
+                🩼 <span id="injury-display">LESÕES: 0</span>
+            </div>
+            <div class="status-item">
+                🧴 <span id="oil-display">ÓLEO: 0</span>
+            </div>
+        </div>
+
+        <div class="message-box" id="message">
+            Mova o Neymar com <span class="key-hint">W</span><span class="key-hint">A</span><span class="key-hint">S</span><span class="key-hint">D</span> e chute com <span class="key-hint">ESPAÇO</span>!
+        </div>
+
+        <!-- D-pad opcional (útil para mobile) -->
+        <div class="dpad-container">
+            <div class="dpad">
+                <button class="empty"></button>
+                <button data-key="w">▲</button>
+                <button class="empty"></button>
+                <button data-key="a">◀</button>
+                <button class="empty"></button>
+                <button data-key="d">▶</button>
+                <button class="empty"></button>
+                <button data-key="s">▼</button>
+                <button class="empty"></button>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button id="shoot-btn">⚡ CHUTAR (ESPAÇO)</button>
+            <button id="walker-btn" disabled>🦯 ANDADOR (0)</button>
+            <button id="reset-btn">🔄 REINICIAR</button>
+        </div>
+        <div class="small-hint">* Use W A S D para andar ou as setas. Chute com ESPAÇO. Cuidado: Neymar é frágil!</div>
     </div>
 
-    <div id="hud">
-        <div><span class="label">📍 POSIÇÃO</span><br><span class="value" id="pos">0, 0</span></div>
-        <div><span class="label">🏃 STATUS</span><br><span class="value" id="status">Parado</span></div>
-        <div><span class="label">🎯 VISÃO</span><br><span class="value" id="direction">Norte</span></div>
-    </div>
+    <script>
+        (function() {
+            // ===== ELEMENTOS =====
+            const field = document.getElementById('field');
+            const neymar = document.getElementById('neymar');
+            const raphinha = document.getElementById('raphinha');
+            const ball = document.getElementById('ball');
+            const messageEl = document.getElementById('message');
+            const scoreSpan = document.getElementById('score-display');
+            const injurySpan = document.getElementById('injury-display');
+            const oilSpan = document.getElementById('oil-display');
+            const walkerBtn = document.getElementById('walker-btn');
+            const resetBtn = document.getElementById('reset-btn');
+            const shootBtn = document.getElementById('shoot-btn');
 
-    <div id="crosshair"><div class="dot"></div></div>
-    <div id="notify">🎮 Clique na tela para travar o mouse</div>
-    <div id="info">FPS: <span id="fps">0</span></div>
-    <div id="controls">
-        <span class="key">W A S D</span> Mover • 
-        <span class="key">Mouse</span> Olhar • 
-        <span class="key">Espaço</span> Pular • 
-        <span class="key">Shift</span> Correr
-    </div>
+            // ===== CONSTANTES =====
+            const FIELD_W = 800, FIELD_H = 500;
+            const PLAYER_W = 50, PLAYER_H = 70;
+            const BALL_SIZE = 28;
 
-    <script type="importmap">
-    {
-        "imports": {
-            "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-            "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
-        }
-    }
-    </script>
+            // ===== ESTADO =====
+            let neymarPos = { x: 100, y: 220 };
+            let raphinhaPos = { x: 650, y: 220 };
+            let ballPos = { x: 120, y: 240 };
+            let ballVelocity = { x: 0, y: 0 };
 
-    <script type="module">
-        import * as THREE from 'three';
+            let score = 0;
+            let injuries = 0;
+            let oilCount = 0;
+            let neymarInjured = false;
+            let usingWalker = false;
+            let walkerAvailable = false;
 
-        // ============================================
-        // CENA E CONFIGURAÇÕES
-        // ============================================
-        const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x87CEEB);
-        scene.fog = new THREE.Fog(0x87CEEB, 80, 200);
+            // Estado das teclas — usa tanto WASD quanto setas
+            const keys = {
+                up: false,
+                down: false,
+                left: false,
+                right: false,
+                space: false
+            };
 
-        const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 500);
-        camera.position.set(0, 1.7, 0);
+            let lastTimestamp = 0;
+            let ballMoving = false;
+            let goalCooldown = false;
+            let fragileBadge = null;
+            let shootCooldown = false; // evita chutes repetidos muito rápidos
 
-        const renderer = new THREE.WebGLRenderer({ 
-            antialiasing: true,
-            powerPreference: "high-performance"
-        });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        renderer.shadowMap.enabled = true;
-        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-        renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        renderer.toneMappingExposure = 1.2;
-        document.body.appendChild(renderer.domElement);
+            // ===== UTILITÁRIOS =====
+            function clamp(value, min, max) {
+                return Math.min(max, Math.max(min, value));
+            }
 
-        // ============================================
-        // ILUMINAÇÃO REALISTA
-        // ============================================
-        const ambientLight = new THREE.AmbientLight(0x404060, 0.4);
-        scene.add(ambientLight);
+            function updatePositions() {
+                neymar.style.left = neymarPos.x + 'px';
+                neymar.style.top = neymarPos.y + 'px';
+                raphinha.style.left = raphinhaPos.x + 'px';
+                raphinha.style.top = raphinhaPos.y + 'px';
+                ball.style.left = ballPos.x + 'px';
+                ball.style.top = ballPos.y + 'px';
+            }
 
-        const hemisphereLight = new THREE.HemisphereLight(0x87CEEB, 0x362d1e, 0.6);
-        scene.add(hemisphereLight);
+            function updateStatus() {
+                scoreSpan.textContent = `GOLS: ${score}`;
+                injurySpan.textContent = `LESÕES: ${injuries}`;
+                oilSpan.textContent = `ÓLEO: ${oilCount}`;
+                walkerBtn.textContent = walkerAvailable ? '🦯 ANDADOR (ATIVAR)' : '🦯 ANDADOR (0)';
+                walkerBtn.disabled = !walkerAvailable || usingWalker;
+                // Botão de chute: desabilitado se lesionado sem andador
+                shootBtn.disabled = (neymarInjured && !usingWalker);
+            }
 
-        const sunLight = new THREE.DirectionalLight(0xffeedd, 1.5);
-        sunLight.position.set(50, 80, 30);
-        sunLight.castShadow = true;
-        sunLight.shadow.mapSize.width = 4096;
-        sunLight.shadow.mapSize.height = 4096;
-        sunLight.shadow.camera.near = 0.5;
-        sunLight.shadow.camera.far = 200;
-        sunLight.shadow.camera.left = -100;
-        sunLight.shadow.camera.right = 100;
-        sunLight.shadow.camera.top = 100;
-        sunLight.shadow.camera.bottom = -100;
-        scene.add(sunLight);
+            function setMessage(text, isWarning = false) {
+                messageEl.innerHTML = text;
+                messageEl.style.borderLeftColor = isWarning ? '#e63946' : '#f7d117';
+            }
 
-        const fillLight = new THREE.DirectionalLight(0x8888ff, 0.3);
-        fillLight.position.set(-30, 20, -30);
-        scene.add(fillLight);
+            function injureNeymar(reason = 'chute forte') {
+                if (neymarInjured) return;
+                neymarInjured = true;
+                injuries++;
+                walkerAvailable = true;
 
-        // ============================================
-        // CHÃO E RUAS
-        // ============================================
-        const groundGeometry = new THREE.PlaneGeometry(500, 500, 1, 1);
-        const groundMaterial = new THREE.MeshStandardMaterial({
-            color: 0x2a2a3a,
-            roughness: 0.9,
-            metalness: 0.1,
-        });
-        const ground = new THREE.Mesh(groundGeometry, groundMaterial);
-        ground.rotation.x = -Math.PI / 2;
-        ground.position.y = -0.01;
-        ground.receiveShadow = true;
-        scene.add(ground);
+                neymar.style.background = '#b0a070';
+                neymar.style.filter = 'grayscale(0.6)';
+                neymar.style.borderColor = '#aaa';
 
-        const roadMaterial = new THREE.MeshStandardMaterial({
-            color: 0x3a3a4a,
-            roughness: 0.8,
-            metalness: 0.05,
-        });
+                if (!fragileBadge) {
+                    fragileBadge = document.createElement('div');
+                    fragileBadge.className = 'fragile-badge';
+                    fragileBadge.textContent = '⚠️ PRODUTO FRÁGIL ⚠️';
+                    neymar.appendChild(fragileBadge);
+                }
 
-        for (let i = -12; i <= 12; i++) {
-            const roadH = new THREE.Mesh(new THREE.PlaneGeometry(500, 4), roadMaterial);
-            roadH.rotation.x = -Math.PI / 2;
-            roadH.position.set(0, 0.01, i * 20);
-            roadH.receiveShadow = true;
-            scene.add(roadH);
+                ballVelocity = { x: 0, y: 0 };
+                ballMoving = false;
 
-            const roadV = new THREE.Mesh(new THREE.PlaneGeometry(4, 500), roadMaterial);
-            roadV.rotation.x = -Math.PI / 2;
-            roadV.position.set(i * 20, 0.01, 0);
-            roadV.receiveShadow = true;
-            scene.add(roadV);
-        }
+                updateStatus();
+                setMessage(`😱 Neymar se lesionou! (${reason}) Ative o ANDADOR para continuar.`, true);
+            }
 
-        // ============================================
-        // GERADOR DE PRÉDIOS
-        // ============================================
-        function createBuilding(x, z, w, d, h, color) {
-            const group = new THREE.Group();
-            
-            const material = new THREE.MeshStandardMaterial({
-                color: color,
-                roughness: 0.6,
-                metalness: 0.2,
+            function resetGame() {
+                neymarPos = { x: 100, y: 220 };
+                raphinhaPos = { x: 650, y: 220 };
+                ballPos = { x: 120, y: 240 };
+                ballVelocity = { x: 0, y: 0 };
+                ballMoving = false;
+                goalCooldown = false;
+                shootCooldown = false;
+
+                score = 0;
+                injuries = 0;
+                oilCount = 0;
+                neymarInjured = false;
+                usingWalker = false;
+                walkerAvailable = false;
+
+                neymar.style.background = '#f7d117';
+                neymar.style.filter = 'none';
+                neymar.style.borderColor = '#fff3b0';
+                neymar.style.transform = 'none';
+
+                if (fragileBadge && fragileBadge.parentNode) {
+                    fragileBadge.remove();
+                    fragileBadge = null;
+                }
+
+                // Reset das teclas
+                keys.up = keys.down = keys.left = keys.right = keys.space = false;
+
+                updateStatus();
+                updatePositions();
+                setMessage('Jogo reiniciado! Mova com <span class="key-hint">W</span><span class="key-hint">A</span><span class="key-hint">S</span><span class="key-hint">D</span> e chute com <span class="key-hint">ESPAÇO</span>.');
+            }
+
+            function applyOil() {
+                oilCount++;
+                setMessage(`🧴 Raphinha passou body splash da Virgínia e óleo corporal! Campo escorregadio...`, false);
+                oilSpan.textContent = `ÓLEO: ${oilCount}`;
+
+                field.style.transition = 'filter 0.2s';
+                field.style.filter = 'brightness(1.3) saturate(1.5)';
+                setTimeout(() => { field.style.filter = 'none'; }, 300);
+            }
+
+            function tryShoot() {
+                if (shootCooldown) return;
+                if (neymarInjured && !usingWalker) {
+                    setMessage('Neymar lesionado! Ative o ANDADOR para jogar.', true);
+                    return;
+                }
+
+                const dx = (neymarPos.x + PLAYER_W/2) - (ballPos.x + BALL_SIZE/2);
+                const dy = (neymarPos.y + PLAYER_H/2) - (ballPos.y + BALL_SIZE/2);
+                const dist = Math.sqrt(dx*dx + dy*dy);
+
+                if (dist > 60) {
+                    setMessage('Muito longe da bola! Aproxime-se para chutar.', false);
+                    return;
+                }
+
+                // Cooldown do chute (300ms)
+                shootCooldown = true;
+                setTimeout(() => { shootCooldown = false; }, 300);
+
+                // Chance de lesão
+                if (!neymarInjured) {
+                    let injuryChance = 0.25 + (oilCount * 0.1);
+                    injuryChance = Math.min(injuryChance, 0.85);
+                    if (Math.random() < injuryChance) {
+                        injureNeymar('chute escorregadio');
+                    }
+                }
+
+                // Chuta a bola para a direita
+                const power = 10;
+                ballVelocity.x = power;
+                ballVelocity.y = (Math.random() - 0.5) * 4;
+                ballMoving = true;
+
+                setMessage('⚡ Chutou! A bola está indo para o gol...', false);
+            }
+
+            function checkGoal() {
+                if (ballPos.x + BALL_SIZE > FIELD_W - 20 && ballPos.x < FIELD_W + 20) {
+                    if (!goalCooldown) {
+                        score++;
+                        updateStatus();
+                        setMessage(`⚽ GOOOOL! Neymar marcou! Total: ${score}`, false);
+                        ballPos = { x: 400, y: 240 };
+                        ballVelocity = { x: 0, y: 0 };
+                        ballMoving = false;
+                        goalCooldown = true;
+                        setTimeout(() => { goalCooldown = false; }, 800);
+                    }
+                }
+
+                if (ballPos.x < -20 || ballPos.x > FIELD_W + 20 || ballPos.y < -20 || ballPos.y > FIELD_H + 20) {
+                    ballPos = { x: 400, y: 240 };
+                    ballVelocity = { x: 0, y: 0 };
+                    ballMoving = false;
+                    setMessage('Bola saiu! Reiniciando no meio.', false);
+                }
+            }
+
+            function moveNeymar() {
+                // Velocidade: normal ou lenta com andador
+                const speed = usingWalker ? 1.8 : 5;
+
+                let dx = 0, dy = 0;
+                if (keys.up) dy -= 1;
+                if (keys.down) dy += 1;
+                if (keys.left) dx -= 1;
+                if (keys.right) dx += 1;
+
+                if (dx !== 0 || dy !== 0) {
+                    const len = Math.sqrt(dx*dx + dy*dy);
+                    dx = (dx / len) * speed;
+                    dy = (dy / len) * speed;
+
+                    neymarPos.x = clamp(neymarPos.x + dx, 0, FIELD_W - PLAYER_W);
+                    neymarPos.y = clamp(neymarPos.y + dy, 0, FIELD_H - PLAYER_H);
+
+                    if (usingWalker) {
+                        neymar.style.transform = 'rotate(3deg)';
+                    } else {
+                        neymar.style.transform = 'none';
+                    }
+                } else {
+                    neymar.style.transform = 'none';
+                }
+            }
+
+            function moveBall() {
+                if (!ballMoving) return;
+
+                ballPos.x += ballVelocity.x;
+                ballPos.y += ballVelocity.y;
+
+                ballVelocity.x *= 0.985;
+                ballVelocity.y *= 0.985;
+
+                if (Math.abs(ballVelocity.x) < 0.1 && Math.abs(ballVelocity.y) < 0.1) {
+                    ballVelocity = { x: 0, y: 0 };
+                    ballMoving = false;
+                }
+
+                if (ballPos.y < 0) {
+                    ballPos.y = 0;
+                    ballVelocity.y *= -0.7;
+                } else if (ballPos.y > FIELD_H - BALL_SIZE) {
+                    ballPos.y = FIELD_H - BALL_SIZE;
+                    ballVelocity.y *= -0.7;
+                }
+
+                checkGoal();
+
+                if (ballPos.x < -10) {
+                    ballPos = { x: 400, y: 240 };
+                    ballVelocity = { x: 0, y: 0 };
+                    ballMoving = false;
+                }
+            }
+
+            function randomEvents() {
+                if (Math.random() < 0.005) {
+                    applyOil();
+                }
+            }
+
+            function toggleWalker() {
+                if (!walkerAvailable || usingWalker) return;
+                usingWalker = true;
+                setMessage('🦯 Neymar está usando o andador! Velocidade reduzida, mas ele continua no jogo.', false);
+                neymar.style.background = '#b8a97a';
+                updateStatus();
+            }
+
+            // ===== LOOP PRINCIPAL =====
+            function gameLoop(timestamp) {
+                if (!lastTimestamp) lastTimestamp = timestamp;
+                const dt = Math.min(100, timestamp - lastTimestamp) / 16.67;
+                lastTimestamp = timestamp;
+
+                // Movimento (apenas se não estiver lesionado ou se estiver com andador)
+                if (!neymarInjured || usingWalker) {
+                    moveNeymar();
+                }
+
+                moveBall();
+                updatePositions();
+
+                // Eventos aleatórios
+                randomEvents();
+
+                // Dica de proximidade
+                if ((!neymarInjured || usingWalker) && !ballMoving) {
+                    const dx = (neymarPos.x + PLAYER_W/2) - (ballPos.x + BALL_SIZE/2);
+                    const dy = (neymarPos.y + PLAYER_H/2) - (ballPos.y + BALL_SIZE/2);
+                    const dist = Math.sqrt(dx*dx + dy*dy);
+                    if (dist < 55) {
+                        setMessage('Pressione <span class="key-hint">ESPAÇO</span> para chutar!', false);
+                    }
+                }
+
+                raphinha.style.boxShadow = '0 0 20px #aaffaa, 0 8px 0 rgba(0,0,0,0.3)';
+
+                requestAnimationFrame(gameLoop);
+            }
+
+            // ===== CONTROLES DE TECLADO =====
+            const keyMap = {
+                'w': 'up', 'W': 'up', 'ArrowUp': 'up',
+                's': 'down', 'S': 'down', 'ArrowDown': 'down',
+                'a': 'left', 'A': 'left', 'ArrowLeft': 'left',
+                'd': 'right', 'D': 'right', 'ArrowRight': 'right',
+                ' ': 'space', 'Space': 'space', 'Spacebar': 'space'
+            };
+
+            window.addEventListener('keydown', (e) => {
+                const mapped = keyMap[e.key];
+                if (!mapped) return;
+
+                e.preventDefault();
+
+                if (mapped === 'space') {
+                    // Evita repetição muito rápida
+                    if (!keys.space) {
+                        keys.space = true;
+                        tryShoot();
+                    }
+                } else {
+                    keys[mapped] = true;
+                }
             });
-            const body = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), material);
-            body.position.y = h/2;
-            body.castShadow = true;
-            body.receiveShadow = true;
-            group.add(body);
 
-            if (w > 2 && d > 2 && h > 3) {
-                const windowMat = new THREE.MeshStandardMaterial({
-                    color: 0x88ccff,
-                    emissive: new THREE.Color(0x224466),
-                    emissiveIntensity: 0.15,
-                    roughness: 0.1,
-                    metalness: 0.8,
-                });
-                
-                const cols = Math.min(Math.floor(w / 1.8), 4);
-                const rows = Math.min(Math.floor(d / 1.8), 4);
-                const floors = Math.min(Math.floor(h / 2.5), 6);
-                
-                for (let i = 0; i < cols; i++) {
-                    for (let j = 0; j < rows; j++) {
-                        for (let k = 0; k < floors; k++) {
-                            const win = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.5), windowMat);
-                            const offsetX = (i / (cols-1 || 1) - 0.5) * (w - 0.8);
-                            const offsetZ = (j / (rows-1 || 1) - 0.5) * (d - 0.8);
-                            const offsetY = (k / (floors-1 || 1) - 0.5) * (h - 1.2) + 0.5;
-                            
-                            if (i % 2 === 0) {
-                                win.position.set(w/2 + 0.05, offsetY + 0.5, offsetZ);
-                                win.rotation.y = Math.PI/2;
-                            } else {
-                                win.position.set(-w/2 - 0.05, offsetY + 0.5, offsetZ);
-                                win.rotation.y = -Math.PI/2;
-                            }
-                            group.add(win);
+            window.addEventListener('keyup', (e) => {
+                const mapped = keyMap[e.key];
+                if (!mapped) return;
+                e.preventDefault();
+
+                if (mapped === 'space') {
+                    keys.space = false;
+                } else {
+                    keys[mapped] = false;
+                }
+            });
+
+            // Previne rolagem com setas/espaço
+            window.addEventListener('keydown', (e) => {
+                if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) {
+                    e.preventDefault();
+                }
+            }, { passive: false });
+
+            // ===== BOTÕES =====
+            walkerBtn.addEventListener('click', toggleWalker);
+
+            resetBtn.addEventListener('click', () => {
+                resetGame();
+            });
+
+            shootBtn.addEventListener('click', () => {
+                tryShoot();
+            });
+
+            // D-pad virtual (mobile)
+            document.querySelectorAll('.dpad button[data-key]').forEach(btn => {
+                const key = btn.dataset.key;
+                const mapped = keyMap[key] || keyMap[key.toUpperCase()];
+                if (!mapped) return;
+
+                const press = (e) => {
+                    e.preventDefault();
+                    if (mapped === 'space') {
+                        if (!keys.space) {
+                            keys.space = true;
+                            tryShoot();
                         }
+                    } else {
+                        keys[mapped] = true;
                     }
-                }
-                
-                for (let i = 0; i < Math.min(cols, 3); i++) {
-                    for (let k = 0; k < Math.min(floors, 5); k++) {
-                        const win = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.5), windowMat);
-                        const offsetX = (i / (Math.min(cols, 3)-1 || 1) - 0.5) * (w - 0.8);
-                        const offsetY = (k / (Math.min(floors, 5)-1 || 1) - 0.5) * (h - 1.2) + 0.5;
-                        win.position.set(offsetX, offsetY + 0.5, d/2 + 0.05);
-                        group.add(win);
-                        
-                        const win2 = win.clone();
-                        win2.position.set(offsetX, offsetY + 0.5, -d/2 - 0.05);
-                        win2.rotation.y = Math.PI;
-                        group.add(win2);
+                };
+                const release = (e) => {
+                    e.preventDefault();
+                    if (mapped === 'space') {
+                        keys.space = false;
+                    } else {
+                        keys[mapped] = false;
                     }
-                }
-            }
+                };
 
-            group.position.set(x, 0, z);
-            scene.add(group);
-            return group;
-        }
-
-        const buildingColors = [
-            0x4a6a8a, 0x6a8a7a, 0x8a7a6a, 0x5a6a7a, 
-            0x7a8a9a, 0x9a8a7a, 0x6a7a8a, 0x8a7a7a,
-            0x3a5a7a, 0x7a6a5a, 0x5a7a6a, 0x6a5a7a,
-            0x4a7a8a, 0x8a6a5a
-        ];
-
-        for (let i = -10; i <= 10; i++) {
-            for (let j = -10; j <= 10; j++) {
-                if (Math.abs(i) <= 1 && Math.abs(j) <= 1) continue;
-                if (Math.random() > 0.15) {
-                    const w = 2.5 + Math.random() * 3.5;
-                    const d = 2.5 + Math.random() * 3.5;
-                    const h = 3 + Math.random() * 12;
-                    const color = buildingColors[Math.floor(Math.random() * buildingColors.length)];
-                    const x = i * 22 + (Math.random() - 0.5) * 2;
-                    const z = j * 22 + (Math.random() - 0.5) * 2;
-                    createBuilding(x, z, w, d, h, color);
-                }
-            }
-        }
-
-        for (let k = 0; k < 20; k++) {
-            const angle = Math.random() * Math.PI * 2;
-            const radius = 25 + Math.random() * 30;
-            const x = Math.cos(angle) * radius;
-            const z = Math.sin(angle) * radius;
-            const h = 15 + Math.random() * 20;
-            const color = 0x4a6a8a;
-            createBuilding(x, z, 4, 4, h, color);
-        }
-
-        // ============================================
-        // ÁRVORES
-        // ============================================
-        function createTree(x, z) {
-            const group = new THREE.Group();
-            
-            const trunkMat = new THREE.MeshStandardMaterial({ color: 0x4a3520, roughness: 0.9 });
-            const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.3, 2.5, 6), trunkMat);
-            trunk.position.y = 1.25;
-            trunk.castShadow = true;
-            group.add(trunk);
-            
-            const leafMat = new THREE.MeshStandardMaterial({ 
-                color: 0x2d5a27, 
-                roughness: 0.8,
-                emissive: new THREE.Color(0x1a3a14),
-                emissiveIntensity: 0.05,
+                btn.addEventListener('mousedown', press);
+                btn.addEventListener('mouseup', release);
+                btn.addEventListener('mouseleave', release);
+                btn.addEventListener('touchstart', press, { passive: false });
+                btn.addEventListener('touchend', release);
+                btn.addEventListener('touchcancel', release);
             });
-            
-            const leaf1 = new THREE.Mesh(new THREE.SphereGeometry(1.2, 6, 6), leafMat);
-            leaf1.position.set(0, 3.5, 0);
-            leaf1.castShadow = true;
-            group.add(leaf1);
-            
-            const leaf2 = new THREE.Mesh(new THREE.SphereGeometry(0.9, 6, 6), leafMat);
-            leaf2.position.set(0.8, 4.2, 0.5);
-            leaf2.castShadow = true;
-            group.add(leaf2);
-            
-            const leaf3 = new THREE.Mesh(new THREE.SphereGeometry(0.9, 6, 6), leafMat);
-            leaf3.position.set(-0.7, 4.0, -0.6);
-            leaf3.castShadow = true;
-            group.add(leaf3);
-            
-            group.position.set(x, 0, z);
-            scene.add(group);
-            return group;
-        }
 
-        for (let i = -10; i <= 10; i++) {
-            for (let j = -10; j <= 10; j++) {
-                if (Math.abs(i) <= 1 && Math.abs(j) <= 1) continue;
-                if (Math.random() > 0.88) {
-                    const x = i * 22 + (Math.random() - 0.5) * 5;
-                    const z = j * 22 + (Math.random() - 0.5) * 5;
-                    if (!(Math.abs(x) < 5 && Math.abs(z) < 5)) {
-                        createTree(x, z);
-                    }
-                }
-            }
-        }
-
-        // ============================================
-        // CARROS ESTACIONADOS
-        // ============================================
-        function createCar(x, z, color, rotation = 0) {
-            const group = new THREE.Group();
-            
-            const bodyMat = new THREE.MeshStandardMaterial({ 
-                color: color, 
-                roughness: 0.3, 
-                metalness: 0.6 
-            });
-            const body = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.4, 1.2), bodyMat);
-            body.position.y = 0.2;
-            body.castShadow = true;
-            body.receiveShadow = true;
-            group.add(body);
-            
-            const cabinMat = new THREE.MeshStandardMaterial({ 
-                color: 0x88ccff, 
-                roughness: 0.1, 
-                metalness: 0.3,
-                transparent: true,
-                opacity: 0.5,
-            });
-            const cabin = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.35, 1.0), cabinMat);
-            cabin.position.set(0, 0.5, 0);
-            cabin.castShadow = true;
-            group.add(cabin);
-            
-            const lightMat = new THREE.MeshStandardMaterial({ 
-                color: 0xffffaa, 
-                emissive: 0xffaa44, 
-                emissiveIntensity: 0.2 
-            });
-            const f1 = new THREE.Mesh(new THREE.SphereGeometry(0.08, 6, 6), lightMat);
-            f1.position.set(0.5, 0.15, -0.6);
-            group.add(f1);
-            const f2 = new THREE.Mesh(new THREE.SphereGeometry(0.08, 6, 6), lightMat);
-            f2.position.set(-0.5, 0.15, -0.6);
-            group.add(f2);
-            
-            const wheelMat = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.9 });
-            const wheelPos = [
-                [-0.7, 0.08, -0.6],
-                [0.7, 0.08, -0.6],
-                [-0.7, 0.08, 0.6],
-                [0.7, 0.08, 0.6]
-            ];
-            for (const pos of wheelPos) {
-                const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.08, 8), wheelMat);
-                wheel.rotation.z = Math.PI/2;
-                wheel.position.set(pos[0], pos[1], pos[2]);
-                group.add(wheel);
-            }
-            
-            group.position.set(x, 0.05, z);
-            group.rotation.y = rotation;
-            scene.add(group);
-            return group;
-        }
-
-        const carColors = [0xff1744, 0x2979ff, 0x00e676, 0xffea00, 0xd500f9, 0xff9100, 0x00bcd4, 0xff4081];
-        for (let i = 0; i < 30; i++) {
-            let x, z, valid;
-            let attempts = 0;
-            do {
-                x = (Math.random() - 0.5) * 440;
-                z = (Math.random() - 0.5) * 440;
-                valid = Math.abs(x) > 5 || Math.abs(z) > 5;
-                attempts++;
-            } while (!valid && attempts < 30);
-            
-            if (valid) {
-                const color = carColors[Math.floor(Math.random() * carColors.length)];
-                createCar(x, z, color, Math.random() * Math.PI * 2);
-            }
-        }
-
-        // ============================================
-        // CONTROLES DE PRIMEIRA PESSOA (MANUAL)
-        // ============================================
-        let isLocked = false;
-        let pitch = 0;
-        let yaw = 0;
-        const mouseSensitivity = 0.002;
-
-        // Posição do jogador
-        const playerPos = new THREE.Vector3(0, 1.7, 0);
-        camera.position.copy(playerPos);
-
-        // Eventos de mouse para controlar a câmera
-        document.addEventListener('mousemove', (event) => {
-            if (!isLocked) return;
-            
-            const movementX = event.movementX || 0;
-            const movementY = event.movementY || 0;
-            
-            yaw -= movementX * mouseSensitivity;
-            pitch -= movementY * mouseSensitivity;
-            pitch = Math.max(-Math.PI/2.1, Math.min(Math.PI/2.1, pitch));
-            
-            // Aplicar rotação à câmera
-            const euler = new THREE.Euler(pitch, yaw, 0, 'YXZ');
-            camera.quaternion.setFromEuler(euler);
-        });
-
-        // Pointer Lock API
-        renderer.domElement.addEventListener('click', () => {
-            if (!isLocked) {
-                renderer.domElement.requestPointerLock();
-            }
-        });
-
-        document.addEventListener('pointerlockchange', () => {
-            isLocked = document.pointerLockElement === renderer.domElement;
-            
-            if (isLocked) {
-                document.getElementById('notify').textContent = '🎮 Mouse travado! Use WASD para andar';
-                document.getElementById('notify').classList.add('show');
-                setTimeout(() => document.getElementById('notify').classList.remove('show'), 2000);
-            } else {
-                document.getElementById('notify').textContent = '🔓 Mouse destravado! Clique para travar';
-                document.getElementById('notify').classList.add('show');
-                setTimeout(() => document.getElementById('notify').classList.remove('show'), 2000);
-            }
-        });
-
-        // ============================================
-        // FÍSICA E MOVIMENTO
-        // ============================================
-        const keys = {};
-        let velocityY = 0;
-        let isOnGround = true;
-        let isRunning = false;
-        const gravity = -30;
-        const jumpSpeed = 9;
-        const walkSpeed = 5;
-        const runSpeed = 9;
-
-        document.addEventListener('keydown', (e) => {
-            keys[e.key.toLowerCase()] = true;
-            if (e.key === ' ') { e.preventDefault(); }
-            if (e.key === 'Shift') { isRunning = true; }
-        });
-
-        document.addEventListener('keyup', (e) => {
-            keys[e.key.toLowerCase()] = false;
-            if (e.key === 'Shift') { isRunning = false; }
-        });
-
-        window.addEventListener('keydown', (e) => {
-            if (e.key === ' ' || e.key === 'Space') e.preventDefault();
-        }, false);
-
-        // ============================================
-        // LOOP PRINCIPAL
-        // ============================================
-        const clock = new THREE.Clock();
-        let frameCount = 0;
-        let fpsCounter = 0;
-
-        function animate() {
-            const delta = Math.min(clock.getDelta(), 0.05);
-            frameCount++;
-            
-            // FPS
-            fpsCounter++;
-            if (frameCount % 30 === 0) {
-                document.getElementById('fps').textContent = Math.round(fpsCounter / 0.5);
-                fpsCounter = 0;
+            // ===== INICIALIZAÇÃO =====
+            function init() {
+                resetGame();
+                updatePositions();
+                requestAnimationFrame(gameLoop);
             }
 
-            if (isLocked) {
-                const speed = isRunning ? runSpeed : walkSpeed;
-                
-                // Direções baseadas na câmera
-                const forward = new THREE.Vector3(0, 0, -1);
-                forward.applyQuaternion(camera.quaternion);
-                forward.y = 0;
-                forward.normalize();
+            init();
 
-                const right = new THREE.Vector3(1, 0, 0);
-                right.applyQuaternion(camera.quaternion);
-                right.y = 0;
-                right.normalize();
-
-                const move = new THREE.Vector3(0, 0, 0);
-                if (keys['w']) move.add(forward);
-                if (keys['s']) move.sub(forward);
-                if (keys['a']) move.sub(right);
-                if (keys['d']) move.add(right);
-
-                let moving = false;
-                if (move.length() > 0) {
-                    move.normalize().multiplyScalar(speed * delta * 15);
-                    playerPos.x += move.x;
-                    playerPos.z += move.z;
-                    moving = true;
-                }
-
-                // Pulo
-                if (keys[' '] && isOnGround) {
-                    velocityY = jumpSpeed;
-                    isOnGround = false;
-                }
-
-                // Gravidade
-                velocityY += gravity * delta;
-                playerPos.y += velocityY * delta;
-                if (playerPos.y <= 1.7) {
-                    playerPos.y = 1.7;
-                    velocityY = 0;
-                    isOnGround = true;
-                }
-
-                // Atualizar câmera
-                camera.position.copy(playerPos);
-
-                // Atualizar HUD
-                document.getElementById('pos').textContent = `${Math.round(playerPos.x)}, ${Math.round(playerPos.z)}`;
-                document.getElementById('status').textContent = moving ? (isRunning ? '🏃 Correndo' : '🚶 Andando') : '⏸ Parado';
-                
-                // Direção (Norte, Sul, Leste, Oeste)
-                const angle = yaw * (180 / Math.PI);
-                let dir = 'Norte';
-                if (angle > -45 && angle <= 45) dir = 'Norte';
-                else if (angle > 45 && angle <= 135) dir = 'Leste';
-                else if (angle > -135 && angle <= -45) dir = 'Oeste';
-                else dir = 'Sul';
-                document.getElementById('direction').textContent = dir;
-            }
-
-            renderer.render(scene, camera);
-            requestAnimationFrame(animate);
-        }
-
-        // ============================================
-        // RESIZE
-        // ============================================
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
-
-        // ============================================
-        // INICIAR
-        // ============================================
-        setTimeout(() => {
-            document.getElementById('loading').style.display = 'none';
-        }, 2500);
-
-        setTimeout(() => {
-            const notify = document.getElementById('notify');
-            notify.textContent = '🎮 Clique na tela para travar o mouse e começar!';
-            notify.classList.add('show');
-            setTimeout(() => notify.classList.remove('show'), 4000);
-        }, 3000);
-
-        animate();
-
-        console.log('🎮 Mundo Aberto em Primeira Pessoa - CORRIGIDO');
-        console.log('📋 WASD - Mover | Mouse - Olhar | Espaço - Pular | Shift - Correr');
-        console.log('🖱️ Clique na tela para travar o mouse');
-        console.log('✅ W agora funciona corretamente para frente!');
+        })();
     </script>
 </body>
 </html>
