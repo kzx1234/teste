@@ -392,6 +392,28 @@
             from { transform: translateX(-50%) scale(1); }
             to { transform: translateX(-50%) scale(1.06); }
         }
+
+        /* Indicador de andador ativo */
+        .walker-indicator {
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #6b8e23;
+            color: white;
+            font-size: 0.6rem;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 900;
+            letter-spacing: 1px;
+            border: 1px solid #a3c44b;
+            white-space: nowrap;
+            display: none;
+        }
+
+        .walker-indicator.active {
+            display: block;
+        }
     </style>
 </head>
 <body>
@@ -404,6 +426,7 @@
 
             <div class="player" id="neymar" style="left: 100px; top: 220px;">
                 <span>⚽</span> NEYMAR
+                <div class="walker-indicator" id="walker-indicator">🦯 ANDADOR</div>
             </div>
 
             <div class="player" id="raphinha" style="left: 650px; top: 220px;">
@@ -451,7 +474,7 @@
             <button id="walker-btn" disabled>🦯 ANDADOR (0)</button>
             <button id="reset-btn">🔄 REINICIAR</button>
         </div>
-        <div class="small-hint">* A bola gruda no Neymar ao se aproximar. Após o gol, a bola fica com você!</div>
+        <div class="small-hint">* Andador agora é mais rápido! A bola gruda no Neymar. Após o gol, ela fica com você.</div>
     </div>
 
     <script>
@@ -470,11 +493,18 @@
             const shootBtn = document.getElementById('shoot-btn');
             const oilEffect = document.getElementById('oil-effect');
             const splashBanner = document.getElementById('splash-banner');
+            const walkerIndicator = document.getElementById('walker-indicator');
 
             // ===== CONSTANTES =====
             const FIELD_W = 800, FIELD_H = 500;
             const PLAYER_W = 50, PLAYER_H = 70;
             const BALL_SIZE = 28;
+
+            // ===== VELOCIDADES AJUSTADAS =====
+            const NEYMAR_SPEED_NORMAL = 5;    // velocidade normal
+            const NEYMAR_SPEED_WALKER = 3.8;  // andador: mais rápido que antes (era 1.8), mas ainda menor que normal
+            const RAPHINHA_SPEED_BASE = 2.2;
+            const RAPHINHA_SPEED_SPLASH = 6.5;
 
             // ===== ESTADO =====
             let neymarPos = { x: 100, y: 220 };
@@ -489,14 +519,12 @@
             let usingWalker = false;
             let walkerAvailable = false;
 
-            // Estado do Raphinha goleiro
-            let raphinhaSpeed = 2.2;              // velocidade base
-            let raphinhaSplashActive = false;     // body splash ativo
-            let raphinhaSplashTimer = 0;          // frames restantes
-            let raphinhaSplashCooldown = 0;       // frames até poder usar novamente
-            let raphinhaTargetY = 220;            // alvo vertical
+            let raphinhaSpeed = RAPHINHA_SPEED_BASE;
+            let raphinhaSplashActive = false;
+            let raphinhaSplashTimer = 0;
+            let raphinhaSplashCooldown = 0;
+            let raphinhaTargetY = 220;
 
-            // Bola "colada" no Neymar (dribbling)
             let ballAttached = false;
 
             const keys = {
@@ -555,7 +583,6 @@
                     neymar.appendChild(fragileBadge);
                 }
 
-                // Se a bola estava colada, solta
                 ballAttached = false;
                 ball.classList.remove('dribbling');
 
@@ -586,8 +613,8 @@
 
                 raphinhaSplashActive = false;
                 raphinhaSplashTimer = 0;
-                raphinhaSplashCooldown = 180; // 3s antes de poder usar splash
-                raphinhaSpeed = 2.2;
+                raphinhaSplashCooldown = 180;
+                raphinhaSpeed = RAPHINHA_SPEED_BASE;
                 raphinhaTargetY = 220;
                 raphinha.classList.remove('splash-active');
                 oilEffect.classList.remove('splash-mode');
@@ -597,6 +624,7 @@
                 neymar.style.filter = 'none';
                 neymar.style.borderColor = '#fff3b0';
                 neymar.style.transform = 'none';
+                walkerIndicator.classList.remove('active');
 
                 if (fragileBadge && fragileBadge.parentNode) {
                     fragileBadge.remove();
@@ -613,9 +641,9 @@
             // ===== BODY SPLASH DA VIRGÍNIA =====
             function activateRaphinhaSplash() {
                 raphinhaSplashActive = true;
-                raphinhaSplashTimer = 240;       // ~4 segundos (60fps)
-                raphinhaSplashCooldown = 480;    // ~8 segundos até poder usar de novo
-                raphinhaSpeed = 6.5;             // MUITO rápido
+                raphinhaSplashTimer = 240;
+                raphinhaSplashCooldown = 480;
+                raphinhaSpeed = RAPHINHA_SPEED_SPLASH;
 
                 raphinha.classList.add('splash-active');
                 oilEffect.classList.add('splash-mode');
@@ -623,7 +651,6 @@
 
                 setMessage('💦 <b>RAPHINHA USOU BODY SPLASH DA VIRGÍNIA!</b> Ele está defendendo TUDO!', true);
 
-                // Some o banner após 2.5s
                 setTimeout(() => {
                     splashBanner.classList.remove('active');
                 }, 2500);
@@ -631,7 +658,7 @@
 
             function deactivateRaphinhaSplash() {
                 raphinhaSplashActive = false;
-                raphinhaSpeed = 2.2;
+                raphinhaSpeed = RAPHINHA_SPEED_BASE;
                 raphinha.classList.remove('splash-active');
                 oilEffect.classList.remove('splash-mode');
                 splashBanner.classList.remove('active');
@@ -645,12 +672,10 @@
                     return;
                 }
 
-                // Verifica distância
                 const dx = (neymarPos.x + PLAYER_W/2) - (ballPos.x + BALL_SIZE/2);
                 const dy = (neymarPos.y + PLAYER_H/2) - (ballPos.y + BALL_SIZE/2);
                 const dist = Math.sqrt(dx*dx + dy*dy);
 
-                // Se a bola está colada, chuta mesmo "perto"
                 if (!ballAttached && dist > 60) {
                     setMessage('Muito longe da bola! Aproxime-se para chutar.', false);
                     return;
@@ -659,7 +684,6 @@
                 shootCooldown = true;
                 setTimeout(() => { shootCooldown = false; }, 300);
 
-                // Chance de lesão
                 if (!neymarInjured) {
                     let injuryChance = 0.25 + (oilCount * 0.1);
                     injuryChance = Math.min(injuryChance, 0.85);
@@ -668,7 +692,6 @@
                     }
                 }
 
-                // Solta a bola (se estava colada) e chuta para a direita
                 ballAttached = false;
                 ball.classList.remove('dribbling');
 
@@ -686,13 +709,11 @@
                 updateStatus();
                 setMessage(`⚽ GOOOOL! Neymar marcou! Total: ${score}`, false);
 
-                // A bola fica com o Neymar (colada) — não renasce no meio
                 ballAttached = true;
                 ballMoving = false;
                 ballVelocity = { x: 0, y: 0 };
                 ball.classList.add('dribbling');
 
-                // Posiciona a bola ao lado do Neymar
                 updateAttachedBall();
 
                 goalCooldown = true;
@@ -707,7 +728,8 @@
 
             // ===== MOVIMENTO NEYMAR =====
             function moveNeymar() {
-                const speed = usingWalker ? 1.8 : 5;
+                // Andador agora é mais rápido (3.8), mas ainda um pouco mais lento que normal (5)
+                const speed = usingWalker ? NEYMAR_SPEED_WALKER : NEYMAR_SPEED_NORMAL;
 
                 let dx = 0, dy = 0;
                 if (keys.up) dy -= 1;
@@ -723,8 +745,9 @@
                     neymarPos.x = clamp(neymarPos.x + dx, 0, FIELD_W - PLAYER_W);
                     neymarPos.y = clamp(neymarPos.y + dy, 0, FIELD_H - PLAYER_H);
 
+                    // Balanço mais suave no andador
                     if (usingWalker) {
-                        neymar.style.transform = 'rotate(3deg)';
+                        neymar.style.transform = 'rotate(2deg)';
                     } else {
                         neymar.style.transform = 'none';
                     }
@@ -732,30 +755,23 @@
                     neymar.style.transform = 'none';
                 }
 
-                // Se a bola está colada, ela acompanha
                 if (ballAttached) {
                     updateAttachedBall();
                 }
             }
 
-            // ===== MOVIMENTO RAPHINHA (GOLEIRO) =====
+            // ===== MOVIMENTO RAPHINHA =====
             function moveRaphinha() {
-                // Raphinha fica na área direita, se movimenta verticalmente
-                const baseX = 660; // perto do gol direito
+                const baseX = 660;
 
-                // Alvo: seguir a bola verticalmente quando estiver perto
                 const ballCenterY = ballPos.y + BALL_SIZE/2;
-                const raphinhaCenterY = raphinhaPos.y + PLAYER_H/2;
 
-                // Se a bola está no lado direito do campo ou se aproximando, Raphinha reage
                 if (ballPos.x > 400) {
                     raphinhaTargetY = ballCenterY - PLAYER_H/2;
                 } else {
-                    // Volta para o centro
                     raphinhaTargetY = FIELD_H/2 - PLAYER_H/2;
                 }
 
-                // Movimento suave em direção ao alvo
                 const diffY = raphinhaTargetY - raphinhaPos.y;
                 const maxStep = raphinhaSpeed;
 
@@ -763,13 +779,11 @@
                     raphinhaPos.y += Math.sign(diffY) * Math.min(Math.abs(diffY), maxStep);
                 }
 
-                // X: pequeno ajuste para cobrir o gol
                 const targetX = baseX - 20;
                 if (Math.abs(raphinhaPos.x - targetX) > 2) {
                     raphinhaPos.x += Math.sign(targetX - raphinhaPos.x) * Math.min(Math.abs(targetX - raphinhaPos.x), 1.5);
                 }
 
-                // Limita à área de goleiro
                 raphinhaPos.y = clamp(raphinhaPos.y, 60, FIELD_H - PLAYER_H - 60);
                 raphinhaPos.x = clamp(raphinhaPos.x, 620, FIELD_W - PLAYER_W - 5);
             }
@@ -778,16 +792,13 @@
             function raphinhaDefense() {
                 if (!ballMoving) return;
 
-                // Distância entre Raphinha e a bola
                 const dx = (raphinhaPos.x + PLAYER_W/2) - (ballPos.x + BALL_SIZE/2);
                 const dy = (raphinhaPos.y + PLAYER_H/2) - (ballPos.y + BALL_SIZE/2);
                 const dist = Math.sqrt(dx*dx + dy*dy);
 
-                // Raio de defesa: maior com splash ativo
                 const defenseRadius = raphinhaSplashActive ? 75 : 45;
 
                 if (dist < defenseRadius) {
-                    // DEFENDEU! Rebate a bola para a esquerda
                     const reflectPower = raphinhaSplashActive ? 9 : 6;
                     ballVelocity.x = -reflectPower * (0.7 + Math.random() * 0.6);
                     ballVelocity.y = (Math.random() - 0.5) * 8;
@@ -799,7 +810,6 @@
                         setMessage('🧤 Raphinha defendeu! A bola voltou.', false);
                     }
 
-                    // Empurra a bola para fora para não ficar presa
                     ballPos.x = Math.min(ballPos.x, raphinhaPos.x - 40);
                 }
             }
@@ -807,7 +817,6 @@
             // ===== MOVIMENTO DA BOLA =====
             function moveBall() {
                 if (ballAttached) {
-                    // Bola colada, não se move sozinha
                     updateAttachedBall();
                     return;
                 }
@@ -825,7 +834,6 @@
                     ballMoving = false;
                 }
 
-                // Quica nas bordas superior/inferior
                 if (ballPos.y < 0) {
                     ballPos.y = 0;
                     ballVelocity.y *= -0.7;
@@ -834,19 +842,15 @@
                     ballVelocity.y *= -0.7;
                 }
 
-                // Verifica defesa do Raphinha
                 raphinhaDefense();
 
-                // Verifica gol
                 if (ballPos.x + BALL_SIZE > FIELD_W - 20 && ballPos.x < FIELD_W + 20) {
                     if (!goalCooldown) {
                         scoreGoal();
                     }
                 }
 
-                // Bola saiu pelas laterais
                 if (ballPos.x < -30 || ballPos.x > FIELD_W + 30) {
-                    // Reposiciona perto do Neymar em vez de no meio
                     ballAttached = true;
                     ballMoving = false;
                     ballVelocity = { x: 0, y: 0 };
@@ -856,9 +860,9 @@
                 }
             }
 
-            // ===== COLETA DA BOLA (quando Neymar se aproxima) =====
+            // ===== COLETA DA BOLA =====
             function checkBallCollection() {
-                if (ballAttached || ballMoving || neymarInjured && !usingWalker) return;
+                if (ballAttached || ballMoving || (neymarInjured && !usingWalker)) return;
 
                 const dx = (neymarPos.x + PLAYER_W/2) - (ballPos.x + BALL_SIZE/2);
                 const dy = (neymarPos.y + PLAYER_H/2) - (ballPos.y + BALL_SIZE/2);
@@ -873,14 +877,12 @@
 
             // ===== EVENTOS ALEATÓRIOS =====
             function randomEvents() {
-                // Raphinha usa body splash periodicamente
                 if (raphinhaSplashCooldown > 0) {
                     raphinhaSplashCooldown--;
                 } else if (!raphinhaSplashActive && Math.random() < 0.008) {
                     activateRaphinhaSplash();
                 }
 
-                // Timer do splash ativo
                 if (raphinhaSplashActive) {
                     raphinhaSplashTimer--;
                     if (raphinhaSplashTimer <= 0) {
@@ -888,7 +890,6 @@
                     }
                 }
 
-                // Óleo corporal (evento separado, mais raro)
                 if (Math.random() < 0.0015) {
                     oilCount++;
                     oilSpan.textContent = `ÓLEO: ${oilCount}`;
@@ -902,8 +903,9 @@
             function toggleWalker() {
                 if (!walkerAvailable || usingWalker) return;
                 usingWalker = true;
-                setMessage('🦯 Neymar está usando o andador! Velocidade reduzida, mas ele continua no jogo.', false);
+                setMessage('🦯 Neymar está usando o andador! Ainda um pouco mais lento, mas bem melhor!', false);
                 neymar.style.background = '#b8a97a';
+                walkerIndicator.classList.add('active');
                 updateStatus();
             }
 
@@ -912,7 +914,6 @@
                 if (!lastTimestamp) lastTimestamp = timestamp;
                 lastTimestamp = timestamp;
 
-                // Movimento
                 if (!neymarInjured || usingWalker) {
                     moveNeymar();
                 }
@@ -924,7 +925,6 @@
 
                 randomEvents();
 
-                // Dica de proximidade
                 if ((!neymarInjured || usingWalker) && !ballMoving && !ballAttached) {
                     const dx = (neymarPos.x + PLAYER_W/2) - (ballPos.x + BALL_SIZE/2);
                     const dy = (neymarPos.y + PLAYER_H/2) - (ballPos.y + BALL_SIZE/2);
@@ -983,7 +983,6 @@
             resetBtn.addEventListener('click', resetGame);
             shootBtn.addEventListener('click', tryShoot);
 
-            // D-pad virtual
             document.querySelectorAll('.dpad button[data-key]').forEach(btn => {
                 const key = btn.dataset.key;
                 const mapped = keyMap[key] || keyMap[key.toUpperCase()];
